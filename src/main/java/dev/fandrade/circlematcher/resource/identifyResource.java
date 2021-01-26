@@ -8,9 +8,13 @@ import io.github.jamsesso.jsonlogic.JsonLogicException;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.validation.Valid;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -33,12 +37,13 @@ public class identifyResource {
                 .stream()
                 .map(name -> ("'" + name + "'"))
                 .collect(Collectors.joining(","));
-        String queryString = "select c.* from circle c where c.workspaceid = :workspaceId and c.name != :default and jsonb_exists_any(c.parameters,array[" + parameters + "]) order by c.parameters_size DESC";
+        String queryString = "select c.* from circle c where c.workspaceid = :workspaceId and c.isdefault = :default and c.enabled = true and jsonb_exists_any(c.parameters,array[" + parameters + "]) order by c.parameters_size DESC";
         Query query = getEntityManager().createNativeQuery(queryString, Circle.class);
         query.setParameter("workspaceId", identify.getWorkspaceId())
-             .setParameter("default", "Default");
+             .setParameter("default", false);
         List<Circle> queryResult = query.getResultList();
         List<CircleResponse> circleResponse = new ArrayList<>();
+        String defaultQueryString;
 
         if (! queryResult.isEmpty()) {
             int logic = 0;
@@ -54,7 +59,7 @@ public class identifyResource {
             }
 
             if (logic == 0) {
-                String defaultQueryString = "select c.* from circle c where c.name = :default";
+                defaultQueryString = "select c.* from circle c where c.name = :default and c.enabled = true";
                 Query defaultQuery = getEntityManager().createNativeQuery(defaultQueryString, Circle.class);
                 defaultQuery.setParameter("default", "Default");
                 Circle defaultQueryResult = (Circle) defaultQuery.getSingleResult();
@@ -64,7 +69,22 @@ public class identifyResource {
                 circleResponse.add(response);
             }
         } else {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            defaultQueryString = "select c.* from circle c where c.name = :default and c.enabled = true";
+            Query defaultQuery = getEntityManager().createNativeQuery(defaultQueryString, Circle.class);
+            defaultQuery.setParameter("default", "Default");
+            Circle defaultQueryResult = null;
+            try {
+                defaultQueryResult = (Circle) defaultQuery.getSingleResult();
+                CircleResponse response = new CircleResponse();
+                response.setId(String.valueOf(defaultQueryResult.getCircleId()));
+                response.setName(defaultQueryResult.getName());
+                circleResponse.add(response);
+            } catch (NoResultException ignored) {}
+
+            if (defaultQueryResult == null) {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok(circleResponse).status(Response.Status.OK).build();
         }
         return Response.ok(circleResponse).status(Response.Status.OK).build();
 

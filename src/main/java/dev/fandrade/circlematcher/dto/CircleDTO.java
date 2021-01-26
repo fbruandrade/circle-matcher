@@ -18,4 +18,5 @@ public class CircleDTO implements DTO {
     @NotNull
     public String match;
     public Boolean enabled;
+    public Boolean isDefault;
 }
