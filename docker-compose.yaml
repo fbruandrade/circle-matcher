@@ -11,6 +11,17 @@ services:
             -   "5432:5432"
         volumes:
             - postgres_cm_data:/var/lib/postgresql/data
+    jaeger:
+        container_name: demojaeger
+        image: jaegertracing/all-in-one:latest
+        ports:
+            - "16686:16686"
+            - "14268:14268"
+            - "5775:5775"
+        expose:
+            - '16686'
+            - '14268'
+            - '5775'
 #    mongo:
 #        image: mongo
 #        environment:

@@ -5,6 +5,7 @@ import dev.fandrade.circlematcher.dto.CircleDTO;
 import dev.fandrade.circlematcher.infra.CircleMapper;
 import dev.fandrade.circlematcher.model.Circle;
 import dev.fandrade.circlematcher.utils.JsonUtils;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
@@ -39,7 +40,7 @@ public class SegmentationResource {
 //    @APIResponse(responseCode = "400", content = @Content(schema = @Schema(allOf = ConstraintViolationResponse.class)))
     public Response create(@Valid CircleDTO dto) {
         Circle circle = circleMapper.toCircle(dto);
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         String key = "var";
         JsonElement p = parseString(circle.getMatch());
         JsonUtils.check(list, key, p);
@@ -56,6 +57,11 @@ public class SegmentationResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("{circleId}")
+//    @APIResponse(responseCode = "200", description = "resource created", content = @Content(schema = @Schema(implementation = Entity.class)))
+    @APIResponse(responseCode = "204", description = "Circle updated")
+    @APIResponse(responseCode = "404", description = "Circle not found")
+    @APIResponse(responseCode = "409", description = "Circle already exists")
+    @Operation(summary = "Update Circle by CircleId")
     public Response update(@PathParam("circleId") String circleId) {
         JsonObject json = Json.createObjectBuilder().add("message", "update URL "+ circleId).build();
         return Response.ok(json).status(Response.Status.NO_CONTENT).build();
@@ -64,6 +70,11 @@ public class SegmentationResource {
     @DELETE
     @Path("{circleId}")
     @Transactional
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @APIResponse(responseCode = "204", description = "Circle deleted")
+    @APIResponse(responseCode = "404", description = "Circle not found")
+    @Operation(summary = "Delete Circle by CircleId")
     public Response delete(@PathParam("circleId") String circleId) {
         String queryString = "select c.* from circle c where c.circleid = :circleId";
         Query query = getEntityManager().createNativeQuery(queryString, Circle.class);
@@ -77,16 +88,12 @@ public class SegmentationResource {
                 return Response.ok(json).status(Response.Status.BAD_REQUEST).build();
             }
             queryResult.delete();
-            return Response.ok().status(Response.Status.NO_CONTENT).build();
         } catch (NoResultException ignored) {}
 
         if (queryResult == null) {
             return Response.ok().status(Response.Status.NOT_FOUND).build();
         }
-
-//        List<CircleResponse> circleResponse = new ArrayList<>();
-        JsonObject json = Json.createObjectBuilder().add("message", "delete URL " + circleId).build();
-        return Response.ok(json).status(Response.Status.OK).build();
+        return Response.ok().status(Response.Status.NO_CONTENT).build();
     }
 
 //    @POST
