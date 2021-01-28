@@ -1,8 +1,10 @@
 package dev.fandrade.circlematcher.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@RegisterForReflection
 public class CircleResponse {
 
     public String id;
