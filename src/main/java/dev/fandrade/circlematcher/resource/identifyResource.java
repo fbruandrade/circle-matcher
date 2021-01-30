@@ -37,20 +37,16 @@ public class identifyResource {
                 .stream()
                 .map(name -> ("'" + name + "'"))
                 .collect(Collectors.joining(","));
-        String queryString = "select c.* from circle c where c.workspaceid = :workspaceId and c.isdefault = :default and c.enabled = true and jsonb_exists_any(c.parameters,array[" + parameters + "]) order by c.parameters_size DESC";
-        Query query = getEntityManager().createNativeQuery(queryString, Circle.class);
-        query.setParameter("workspaceId", identify.getWorkspaceId())
-             .setParameter("default", false);
-        List<Circle> queryResult = query.getResultList();
+        List<Circle> queryResult = findCircleByWorkspaceIdAndParams(identify.getWorkspaceId(), parameters);
         List<CircleResponse> circleResponse = new ArrayList<>();
-        String defaultQueryString;
+        CircleResponse response = new CircleResponse();
+
 
         if (! queryResult.isEmpty()) {
             int logic = 0;
             for (Circle circle : queryResult) {
                 JsonLogic jsonLogic = new JsonLogic();
                 if ((boolean) jsonLogic.apply(circle.getMatch(), identify.getRequestData())) {
-                    CircleResponse response = new CircleResponse();
                     response.setId(String.valueOf(circle.getCircleId()));
                     response.setName(circle.getName());
                     circleResponse.add(response);
@@ -59,23 +55,15 @@ public class identifyResource {
             }
 
             if (logic == 0) {
-                defaultQueryString = "select c.* from circle c where c.name = :default and c.enabled = true";
-                Query defaultQuery = getEntityManager().createNativeQuery(defaultQueryString, Circle.class);
-                defaultQuery.setParameter("default", "Default");
-                Circle defaultQueryResult = (Circle) defaultQuery.getSingleResult();
-                CircleResponse response = new CircleResponse();
+                Circle defaultQueryResult = findCircleDefaultByWorkspaceId(identify.getWorkspaceId());
                 response.setId(String.valueOf(defaultQueryResult.getCircleId()));
                 response.setName(defaultQueryResult.getName());
                 circleResponse.add(response);
             }
         } else {
-            defaultQueryString = "select c.* from circle c where c.name = :default and c.enabled = true";
-            Query defaultQuery = getEntityManager().createNativeQuery(defaultQueryString, Circle.class);
-            defaultQuery.setParameter("default", "Default");
             Circle defaultQueryResult = null;
             try {
-                defaultQueryResult = (Circle) defaultQuery.getSingleResult();
-                CircleResponse response = new CircleResponse();
+                defaultQueryResult = findCircleDefaultByWorkspaceId(identify.getWorkspaceId());
                 response.setId(String.valueOf(defaultQueryResult.getCircleId()));
                 response.setName(defaultQueryResult.getName());
                 circleResponse.add(response);
@@ -88,5 +76,23 @@ public class identifyResource {
         }
         return Response.ok(circleResponse).status(Response.Status.OK).build();
 
+    }
+
+    public List<Circle> findCircleByWorkspaceIdAndParams(String workspaceId, String params) {
+        String queryString = "select c.* from circle c where c.workspaceid = :workspaceId and c.isdefault = :default " +
+                "and c.enabled = true and jsonb_exists_any(c.parameters,array[" + params + "]) order by c.parameters_size DESC";
+        Query query = getEntityManager().createNativeQuery(queryString, Circle.class);
+        query.setParameter("workspaceId", workspaceId)
+                .setParameter("default", false);
+        return query.getResultList();
+    }
+
+    public Circle findCircleDefaultByWorkspaceId(String workspaceId) {
+        String defaultQueryString;
+        defaultQueryString = "select c.* from circle c where c.workspaceid = :workspaceid and c.enabled = true and c.isdefault = true";
+        Query defaultQuery = getEntityManager().createNativeQuery(defaultQueryString, Circle.class);
+        defaultQuery.setParameter("workspaceid", workspaceId);
+
+        return (Circle) defaultQuery.getSingleResult();
     }
 }
