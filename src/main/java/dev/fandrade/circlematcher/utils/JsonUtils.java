@@ -21,13 +21,17 @@ public class JsonUtils {
                 for (Map.Entry<String, JsonElement> entry : entrySet) {
                     String key1 = entry.getKey();
                     if (key1.equals(key)) {
-                        list.add(entry.getValue().toString());
+                        if (!list.contains(jsonElement.toString())) {
+                            list.add(entry.getValue().toString());
+                        }
                     }
                     check(list, key, entry.getValue());
                 }
             } else {
                 if (jsonElement.toString().equals(key)) {
-                    list.add(jsonElement.toString());
+                    if (!list.contains(jsonElement.toString())) {
+                        list.add(jsonElement.toString());
+                    }
                 }
             }
         }
