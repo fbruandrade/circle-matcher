@@ -20,6 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -40,10 +41,29 @@ public class identifyResource {
                 .stream()
                 .map(name -> ("'" + name + "'"))
                 .collect(Collectors.joining(","));
-        List<Circle> queryResult = identifyService.findCircleByWorkspaceIdAndParams(identify.getWorkspaceId(), parameters);
         List<CircleResponse> circleResponse = new ArrayList<>();
+        List<Circle> queryResult = identifyService.findCircleByWorkspaceIdAndParams(identify.getWorkspaceId(), parameters);
 
-        if (! queryResult.isEmpty()) {
+        for (Map.Entry<String, Object> entry : identify.getRequestData().entrySet()) {
+            String k = entry.getKey();
+            Object v = entry.getValue();
+            List<Circle> circles = identifyService.countCSVCircle(identify.getWorkspaceId(), k);
+            long count = circles.size();
+            if (count != 0) {
+                Circle ResultCSV;
+                try {
+                    CircleResponse response = new CircleResponse();
+                    ResultCSV = identifyService.findCSVCircleDefaultByWorkspaceIdAndValue(identify.getWorkspaceId(), k, String.valueOf(v));
+                    response.setId(String.valueOf(ResultCSV.getCircleId()));
+                    response.setName(ResultCSV.getName());
+                    circleResponse.add(response);
+                } catch (NoResultException e) {
+                    System.out.println(e);
+                }
+            }
+        }
+
+        if (! queryResult.isEmpty() || circleResponse.size() > 0) {
             int logic = 0;
             for (Circle circle : queryResult) {
                 JsonLogic jsonLogic = new JsonLogic();
@@ -56,13 +76,14 @@ public class identifyResource {
                 }
             }
 
-            if (logic == 0) {
-                Circle defaultQueryResult = null;
+            if (logic == 0 && circleResponse.size() == 0) {
+                Circle defaultQueryResult;
                 try {
                     CircleResponse response = new CircleResponse();
                     defaultQueryResult = identifyService.findCircleDefaultByWorkspaceId(identify.getWorkspaceId());
                     response.setId(String.valueOf(defaultQueryResult.getCircleId()));
                     response.setName(defaultQueryResult.getName());
+                    System.out.println("if");
                     circleResponse.add(response);
                 } catch (NoResultException e) {
                     System.out.println(e);
@@ -75,6 +96,7 @@ public class identifyResource {
                 defaultQueryResult = identifyService.findCircleDefaultByWorkspaceId(identify.getWorkspaceId());
                 response.setId(String.valueOf(defaultQueryResult.getCircleId()));
                 response.setName(defaultQueryResult.getName());
+                System.out.println("else");
                 circleResponse.add(response);
             } catch (NoResultException ignored) {}
 
@@ -87,21 +109,4 @@ public class identifyResource {
         return Response.ok(circleResponse).status(Response.Status.OK).build();
 
     }
-
-//    public List<Circle> findCircleByWorkspaceIdAndParams(String workspaceId, String params) {
-//        String queryString = "select c.* from circle c where c.workspaceid = :workspaceId and c.isdefault = false " +
-//                "and c.enabled = true and jsonb_exists_any(c.parameters,array[" + params + "]) order by c.parameters_size DESC";
-//        Query query = getEntityManager().createNativeQuery(queryString, Circle.class);
-//        query.setParameter("workspaceId", workspaceId);
-//
-//        return query.getResultList();
-//    }
-//
-//    public Circle findCircleDefaultByWorkspaceId(String workspaceId) {
-//        String defaultQueryString = "select c.* from circle c where c.workspaceid = :workspaceId and c.enabled = true and c.isdefault = true";
-//        Query defaultQuery = getEntityManager().createNativeQuery(defaultQueryString, Circle.class);
-//        defaultQuery.setParameter("workspaceId", workspaceId);
-//
-//        return (Circle) defaultQuery.getSingleResult();
-//    }
 }

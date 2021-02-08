@@ -27,12 +27,15 @@ public class Circle extends PanacheEntityBase {
     public Boolean enabled = true;
     @Column(columnDefinition = "boolean default false")
     public Boolean isDefault = false;
+    @Column(columnDefinition = "boolean default false")
+    public Boolean csv = false;
     @CreationTimestamp
     @Column(name = "created_at",updatable = false)
     public Date createdAt;
     @UpdateTimestamp
     @Column(name = "updated_at")
     public Date updatedAt;
+
     public Long getId() {
         return id;
     }
@@ -103,6 +106,14 @@ public class Circle extends PanacheEntityBase {
 
     public void setDefault(Boolean aDefault) {
         isDefault = aDefault;
+    }
+
+    public Boolean getCsv() {
+        return csv;
+    }
+
+    public void setCsv(Boolean csv) {
+        this.csv = csv;
     }
 
     public Date getCreatedAt() {
