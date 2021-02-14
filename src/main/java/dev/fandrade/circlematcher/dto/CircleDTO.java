@@ -11,10 +11,8 @@ public class CircleDTO implements DTO {
 
     @NotNull
     public String name;
-    @NotNull
-    public UUID circleId;
-    @NotNull
-    public UUID workspaceId;
+    public String circleId;
+    public String workspaceId;
     @NotNull
     public String match;
     public Boolean enabled;

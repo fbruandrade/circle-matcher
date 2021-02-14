@@ -16,10 +16,12 @@ public class Circle extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
     public String name;
-    public UUID circleId;
-    public UUID workspaceId;
+    public String circleId;
+    public String workspaceId;
     @Column(columnDefinition = "jsonb")
     public String match;
+    @Column(columnDefinition = "jsonb")
+    public String matchcsv;
     @Column(columnDefinition = "jsonb")
     public String parameters;
     public Integer parameters_size;
@@ -35,6 +37,9 @@ public class Circle extends PanacheEntityBase {
     @UpdateTimestamp
     @Column(name = "updated_at")
     public Date updatedAt;
+
+    public Circle() {
+    }
 
     public Long getId() {
         return id;
@@ -52,19 +57,19 @@ public class Circle extends PanacheEntityBase {
         this.name = name;
     }
 
-    public UUID getCircleId() {
+    public String getCircleId() {
         return circleId;
     }
 
-    public void setCircleId(UUID circleId) {
+    public void setCircleId(String circleId) {
         this.circleId = circleId;
     }
 
-    public UUID getWorkspaceId() {
+    public String getWorkspaceId() {
         return workspaceId;
     }
 
-    public void setWorkspaceId(UUID workspaceId) {
+    public void setWorkspaceId(String workspaceId) {
         this.workspaceId = workspaceId;
     }
 
@@ -74,6 +79,14 @@ public class Circle extends PanacheEntityBase {
 
     public void setMatch(String match) {
         this.match = match;
+    }
+
+    public String getMatchcsv() {
+        return matchcsv;
+    }
+
+    public void setMatchcsv(String matchcsv) {
+        this.matchcsv = matchcsv;
     }
 
     public String getParameters() {

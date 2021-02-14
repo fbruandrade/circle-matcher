@@ -47,19 +47,14 @@ public class identifyResource {
         for (Map.Entry<String, Object> entry : identify.getRequestData().entrySet()) {
             String k = entry.getKey();
             Object v = entry.getValue();
-            List<Circle> circles = identifyService.countCSVCircle(identify.getWorkspaceId(), k);
-            long count = circles.size();
-            if (count != 0) {
-                Circle ResultCSV;
-                try {
-                    CircleResponse response = new CircleResponse();
-                    ResultCSV = identifyService.findCSVCircleDefaultByWorkspaceIdAndValue(identify.getWorkspaceId(), k, String.valueOf(v));
-                    response.setId(String.valueOf(ResultCSV.getCircleId()));
-                    response.setName(ResultCSV.getName());
-                    circleResponse.add(response);
-                } catch (NoResultException e) {
-                    System.out.println(e);
-                }
+            Object[] ResultCSV1;
+            try {
+                CircleResponse response = new CircleResponse();
+                ResultCSV1 = identifyService.findCSVCircleDefaultByWorkspaceIdAndValueObj(identify.getWorkspaceId(), k, String.valueOf(v));
+                response.setId(String.valueOf(ResultCSV1[0]));
+                response.setName(String.valueOf(ResultCSV1[1]));
+                circleResponse.add(response);
+            } catch (NoResultException ignored) {
             }
         }
 
@@ -85,8 +80,7 @@ public class identifyResource {
                     response.setName(defaultQueryResult.getName());
                     System.out.println("if");
                     circleResponse.add(response);
-                } catch (NoResultException e) {
-                    System.out.println(e);
+                } catch (NoResultException ignored) {
                 }
             }
         } else {
